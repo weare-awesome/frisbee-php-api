@@ -2,7 +2,10 @@
   "name": "weare-awesome/frisbee-php-api",
   "license": "Apache-2.0",
   "require": {
-    "guzzlehttp/guzzle": "^7.2"
+    "php": "^8.0.2",
+    "guzzlehttp/guzzle": "^7.2",
+    "illuminate/collections": "^9.38",
+    "nesbot/carbon": "^2.62"
   },
   "autoload": {
     "psr-4": {
