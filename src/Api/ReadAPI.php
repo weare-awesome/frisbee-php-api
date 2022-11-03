@@ -11,9 +11,11 @@ use WeAreAwesome\FrisbeePHPAPI\Requests\Content\PageRequest;
 class ReadAPI extends ApiBase
 {
 
+    protected int $distributionId;
 
-    public function __construct(Client $client, string $readAPIUrl)
+    public function __construct(Client $client, int $distributionId, string $readAPIUrl)
     {
+        $this->distributionId = $distributionId;
         parent::__construct($client, $readAPIUrl);
     }
 
@@ -34,15 +36,17 @@ class ReadAPI extends ApiBase
 
         $pageCall = PageCall::make($request->path, $this->distributionId);
         $callCollection = new ContentCallCollection();
+
         $callCollection->addCall($pageCall);
+
         if ($request->hasAdditionalCalls()) {
             foreach ($request->additionCalls as $additionalCall) {
                 $additionalCall->setDistributionId($this->distributionId);
-                $api->addCall($additionalCall);
+                $callCollection->addCall($additionalCall);
             }
         }
-
-        $calls = $api->initCalls();
+        
+        $this->handleCallCollection($callCollection);
 
         $page = $pageCall->toContentResource();
 
@@ -64,12 +68,13 @@ class ReadAPI extends ApiBase
 
     /**
      * @param Client $client
+     * @param int $distributionId
      * @param string $readAPIUrl
      * @return ReadAPI
      */
-    public static function make(Client $client, string $readAPIUrl): ReadAPI
+    public static function make(Client $client, int $distributionId, string $readAPIUrl): ReadAPI
     {
-        return new static($client, $readAPIUrl);
+        return new static($client, $distributionId, $readAPIUrl);
     }
 
 

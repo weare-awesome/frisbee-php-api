@@ -4,42 +4,114 @@ namespace WeAreAwesome\FrisbeePHPAPI\Requests\Content;
 
 use GuzzleHttp\Psr7\Response;
 use WeAreAwesome\FrisbeePHPAPI\Content\ContentResource;
+use WeAreAwesome\FrisbeePHPAPI\FrisbeeException;
+use WeAreAwesome\FrisbeePHPAPI\Content\Page;
 
 class PageCall implements ContentCall
 {
+    /**
+     * @var
+     */
+    protected $path;
+    /**
+     * @var
+     */
+    protected $distributionId;
 
-    public function setDistributionId(int $distributionId)
+    /**
+     * @var Response
+     */
+    protected $response = null;
+
+    /**
+     * PageCall constructor.
+     */
+    public function __construct($path, $distributionId)
     {
-        // TODO: Implement setDistributionId() method.
+        $this->path = $path;
+        $this->distributionId = $distributionId;
     }
 
-    public function getKey(): string
+    /**
+     * @param $path
+     * @param $distributionId
+     * @return static
+     */
+    public static function make($path, $distributionId)
     {
-        // TODO: Implement getKey() method.
+        return new static($path, $distributionId);
     }
 
+    /**
+     * @return string
+     */
     public function getMethod(): string
     {
-        // TODO: Implement getMethod() method.
+        return 'get';
     }
 
+    /**
+     * @return string
+     */
     public function getPath(): string
     {
-        // TODO: Implement getPath() method.
+        return '/page';
     }
 
+    /**
+     * @return array[]
+     */
     public function getOptions(): array
     {
-        // TODO: Implement getOptions() method.
+        return [
+            'query' => [
+                'path' => $this->path,
+                'distribution_id' => $this->distributionId
+            ]
+        ];
     }
 
+    /**
+     * @return string
+     */
+    public function getKey(): string
+    {
+        return 'page';
+    }
+
+    /**
+     * @param Response $response
+     */
     public function setResponse(Response $response)
     {
-        // TODO: Implement setResponse() method.
+        $this->response = $response;
     }
 
+    /**
+     * @return ContentResource
+     * @throws SeamSystemException
+     */
     public function toContentResource(): ContentResource
     {
-        // TODO: Implement toContentResource() method.
+        if(!$this->response instanceof Response) {
+            throw new FrisbeeException('Called before request handled');
+        }
+
+        if($this->response->getStatusCode() !== 200) {
+            throw new FrisbeeException('Content Call error');
+        }
+
+        $attributes = json_decode($this->response->getBody()->getContents(), true);
+
+        return Page::make($attributes);
+
+    }
+
+    /**
+     * @param int $distributionId
+     */
+    public function setDistributionId(int $distributionId)
+    {
+        $this->distributionId = $distributionId;
     }
 }

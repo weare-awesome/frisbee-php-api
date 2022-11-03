@@ -3,6 +3,7 @@
 namespace WeAreAwesome\FrisbeePHPAPI;
 
 use GuzzleHttp\Client;
+use WeAreAwesome\FrisbeePHPAPI\Api\ReadAPI;
 
 /**
  *
@@ -25,18 +26,19 @@ class Frisbee
      * @param Client $client
      * @param string $readAPIUrl
      */
-    public function __construct(Client $client, string $readAPIUrl)
+    public function __construct(Client $client,int $distributionId, string $readAPIUrl)
     {
         $this->client = $client;
         $this->readAPIUrl = $readAPIUrl;
+        $this->distributionId = $distributionId;
     }
 
     /**
-     * @return void
+     * @return ReadAPI
      */
-    public function read()
+    public function read(): ReadAPI
     {
-
+        return ReadAPI::make($this->client, $this->distributionId, $this->readAPIUrl);
     }
 
 
@@ -45,9 +47,9 @@ class Frisbee
      * @param $readAPIUrl
      * @return Frisbee
      */
-    public static function make(Client $client, $readAPIUrl): Frisbee
+    public static function make(Client $client, int $distributionId, $readAPIUrl): Frisbee
     {
-        return new static($client, $readAPIUrl);
+        return new static($client, $distributionId, $readAPIUrl);
     }
 
 
