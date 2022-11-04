@@ -96,6 +96,7 @@ class PageCall implements ContentCall
         if(!$this->response instanceof Response) {
             throw new FrisbeeException('Called before request handled');
         }
+        
 
         if($this->response->getStatusCode() !== 200) {
             throw new FrisbeeException('Content Call error');
