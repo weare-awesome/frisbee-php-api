@@ -21,4 +21,14 @@ class ContentCallCollection implements CallCollection
         $this->calls[] = $call;
     }
 
+    /**
+     * @param array $ignore
+     * @return array
+     */
+    public function except(array $ignore = []) : array
+    {
+        return array_filter($this->calls, function ($call) use ($ignore) {
+            return !in_array($call->getKey(), $ignore);
+        });
+    }
 }

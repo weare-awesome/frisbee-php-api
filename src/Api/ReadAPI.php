@@ -45,14 +45,14 @@ class ReadAPI extends ApiBase
                 $callCollection->addCall($additionalCall);
             }
         }
-
         $this->handleCallCollection($callCollection);
+
 
         $page = $pageCall->toContentResource();
 
 
         if ($request->hasAdditionalCalls()) {
-            foreach ($calls->except([$pageCall->getKey()]) as $call) {
+            foreach ($callCollection->except([$pageCall->getKey()]) as $call) {
 
                 $page->additionalContent = $page->additionalContent->add($call->toContentResource());
             }

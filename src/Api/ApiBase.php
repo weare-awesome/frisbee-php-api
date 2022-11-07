@@ -6,7 +6,8 @@ use GuzzleHttp\Client;
 use GuzzleHttp\Exception\ClientException;
 use GuzzleHttp\Exception\ServerException;
 use GuzzleHttp\Promise;
-use WeAreAwesome\FrisbeePHPAPI\FrisbeeException;
+use WeAreAwesome\FrisbeePHPAPI\Exceptions\FrisbeeAuthorizationException;
+use WeAreAwesome\FrisbeePHPAPI\Exceptions\FrisbeeException;
 use WeAreAwesome\FrisbeePHPAPI\Requests\Content\ContentCallCollection;
 use WeAreAwesome\FrisbeePHPAPI\Requests\Content\Exceptions\FrisbeeContentNotFound;
 
@@ -58,6 +59,10 @@ abstract class ApiBase
         }catch (ClientException | ServerException $exception) {
             if ($exception->getResponse()->getStatusCode() === 404 || $exception->getResponse()->getStatusCode() === 422) {
                 throw new FrisbeeContentNotFound('We could not find this page or it is not currently distributed');
+            }
+
+            if($exception->getResponse()->getStatusCode() === 401) {
+                throw new FrisbeeAuthorizationException('Call not authorized');
             }
 
             throw new FrisbeeException('There has been an error in the system');

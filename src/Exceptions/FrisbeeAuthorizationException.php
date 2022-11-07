@@ -4,7 +4,7 @@
 namespace WeAreAwesome\FrisbeePHPAPI\Exceptions;
 
 
-class FrisbeeException extends \Exception
+class FrisbeeAuthorizationException extends \Exception
 {
 
 }
