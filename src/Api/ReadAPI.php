@@ -13,10 +13,10 @@ class ReadAPI extends ApiBase
 
     protected int $distributionId;
 
-    public function __construct(Client $client, int $distributionId, string $readAPIUrl)
+    public function __construct(Client $client, string $apiToken, int $distributionId, string $readAPIUrl)
     {
         $this->distributionId = $distributionId;
-        parent::__construct($client, $readAPIUrl);
+        parent::__construct($client, $apiToken, $readAPIUrl);
     }
 
     public function page(PageRequest|PageCall $request):Page
@@ -45,7 +45,7 @@ class ReadAPI extends ApiBase
                 $callCollection->addCall($additionalCall);
             }
         }
-        
+
         $this->handleCallCollection($callCollection);
 
         $page = $pageCall->toContentResource();
@@ -72,9 +72,9 @@ class ReadAPI extends ApiBase
      * @param string $readAPIUrl
      * @return ReadAPI
      */
-    public static function make(Client $client, int $distributionId, string $readAPIUrl): ReadAPI
+    public static function make(Client $client, string $apiToken, int $distributionId, string $readAPIUrl): ReadAPI
     {
-        return new static($client, $distributionId, $readAPIUrl);
+        return new static($client, $apiToken, $distributionId, $readAPIUrl);
     }
 
 

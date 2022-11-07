@@ -26,10 +26,11 @@ abstract class ApiBase
      * @param Client $client
      * @param string $apiUrl
      */
-    public function __construct(Client $client, string $apiUrl)
+    public function __construct(Client $client, string $apiToken, string $apiUrl)
     {
         $this->client = $client;
         $this->apiUrl = $apiUrl;
+        $this->apiToken = $apiToken;
     }
 
     public function asyncRequest(string $method, string $path, array $options = []) {
@@ -79,7 +80,8 @@ abstract class ApiBase
     {
         return [
             'Content-Type' => 'application/json',
-            'Accepts' => 'application/json'
+            'Accepts' => 'application/json',
+            'Authorization' => "Bearer " . $this->apiToken
         ];
     }
 }

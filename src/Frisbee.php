@@ -26,11 +26,12 @@ class Frisbee
      * @param Client $client
      * @param string $readAPIUrl
      */
-    public function __construct(Client $client,int $distributionId, string $readAPIUrl)
+    public function __construct(Client $client, string $apiToken, int $distributionId, string $readAPIUrl)
     {
         $this->client = $client;
         $this->readAPIUrl = $readAPIUrl;
         $this->distributionId = $distributionId;
+        $this->apiToken = $apiToken;
     }
 
     /**
@@ -38,7 +39,7 @@ class Frisbee
      */
     public function read(): ReadAPI
     {
-        return ReadAPI::make($this->client, $this->distributionId, $this->readAPIUrl);
+        return ReadAPI::make($this->client,$this->apiToken, $this->distributionId, $this->readAPIUrl);
     }
 
 
@@ -47,9 +48,9 @@ class Frisbee
      * @param $readAPIUrl
      * @return Frisbee
      */
-    public static function make(Client $client, int $distributionId, $readAPIUrl): Frisbee
+    public static function make(Client $client, string $apiToken, int $distributionId, $readAPIUrl): Frisbee
     {
-        return new static($client, $distributionId, $readAPIUrl);
+        return new static($client, $apiToken, $distributionId, $readAPIUrl);
     }
 
 
