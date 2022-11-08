@@ -13,7 +13,7 @@ class Gallery extends ContentItem implements ContentItemInterface
 
             return Image::make([
                 'title' => $image['name'],
-                'body' => $image['file_name'],
+                'body' => $image['file']['name'],
                 'type' => 'image',
                 'fixed' => false,
                 'order' => 0,
