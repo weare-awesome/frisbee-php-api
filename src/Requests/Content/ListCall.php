@@ -99,7 +99,9 @@ class ListCall implements ContentCall
                 'distribution_id' => $this->distributionId,
                 'content_type_ids' => $this->contentTypeIds,
                 'order_by' => $this->orderBy,
-                'order_direction' => $this->orderDirection
+                'order_direction' => $this->orderDirection,
+                'per_page' => $this->perPage,
+                'page' => $this->page
             ]
         ];
     }

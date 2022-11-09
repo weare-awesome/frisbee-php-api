@@ -35,6 +35,11 @@ class ContentList extends ContentResource implements ListResource
         return $this->items;
     }
 
+    public function pagination()
+    {
+        return $this->pagination;
+    }
+
 
     /**
      * @param array $items
