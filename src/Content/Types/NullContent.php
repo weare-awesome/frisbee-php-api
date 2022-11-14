@@ -46,6 +46,6 @@ class NullContent extends ContentItem implements ContentItemInterface
 
     public function tagAttribute(): string
     {
-        return 'data-seam-tag=' . $this->tag() ;
+        return 'data-frisbee-tag=' . $this->tag() ;
     }
 }
