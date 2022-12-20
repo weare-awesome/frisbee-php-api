@@ -5,6 +5,7 @@ namespace WeAreAwesome\FrisbeePHPAPI\Api;
 use GuzzleHttp\Client;
 use WeAreAwesome\FrisbeePHPAPI\Content\Page;
 use WeAreAwesome\FrisbeePHPAPI\Requests\Content\ContentCallCollection;
+use WeAreAwesome\FrisbeePHPAPI\Requests\Content\DistributionCall;
 use WeAreAwesome\FrisbeePHPAPI\Requests\Content\PageCall;
 use WeAreAwesome\FrisbeePHPAPI\Requests\Content\PageRequest;
 
@@ -30,6 +31,15 @@ class ReadAPI extends ApiBase
 
     private function handlePageCall(PageCall $call): Page
     {
+    }
+
+    public function distributionCall(DistributionCall $call)
+    {
+        $callCollection = new ContentCallCollection();
+        $call->setDistributionId($this->distributionId);
+        $callCollection->addCall($call);
+        $this->handleCallCollection($callCollection);
+        return $call->toContentResource();
     }
 
     private function handlePageRequest(PageRequest $request): Page {
