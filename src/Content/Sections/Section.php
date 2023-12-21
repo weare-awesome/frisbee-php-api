@@ -144,6 +144,6 @@ class Section extends BaseSection implements SectionInterface
      */
     public function all(): Collection
     {
-        return $this->content;
+        return $this->content->sortBy('order');
     }
 }
