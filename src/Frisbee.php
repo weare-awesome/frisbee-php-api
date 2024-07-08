@@ -22,6 +22,9 @@ class Frisbee
      */
     private string $readAPIUrl;
 
+    protected ?string $distributionTag = null;
+
+
     /**
      * @param Client $client
      * @param string $readAPIUrl
@@ -34,12 +37,33 @@ class Frisbee
         $this->apiToken = $apiToken;
     }
 
+
+    /**
+     * @param string $distributionTag
+     * @return $this
+     */
+    public function distributionTagOverride(string $distributionTag): Frisbee
+    {
+        $this->distributionTag = $distributionTag;
+        return $this;
+    }
+
+    private function makeRead(): ReadAPI
+    {
+        return ReadAPI::make($this->client, $this->apiToken, $this->distributionId, $this->readAPIUrl);
+    }
+
     /**
      * @return ReadAPI
      */
     public function read(): ReadAPI
     {
-        return ReadAPI::make($this->client,$this->apiToken, $this->distributionId, $this->readAPIUrl);
+
+        if($this->distributionTag !== null) {
+            return $this->makeRead()->distributionTagOverride($this->distributionTag);
+        }
+
+        return $this->makeRead();
     }
 
 

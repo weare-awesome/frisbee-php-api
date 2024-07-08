@@ -8,6 +8,7 @@ use GuzzleHttp\Exception\ServerException;
 use GuzzleHttp\Promise;
 use WeAreAwesome\FrisbeePHPAPI\Exceptions\FrisbeeAuthorizationException;
 use WeAreAwesome\FrisbeePHPAPI\Exceptions\FrisbeeException;
+use WeAreAwesome\FrisbeePHPAPI\Requests\Content\ContentCall;
 use WeAreAwesome\FrisbeePHPAPI\Requests\Content\ContentCallCollection;
 use WeAreAwesome\FrisbeePHPAPI\Requests\Content\Exceptions\FrisbeeContentNotFound;
 
@@ -22,6 +23,7 @@ abstract class ApiBase
      * @var string
      */
     private string $apiUrl;
+
 
     /**
      * @param Client $client
@@ -42,6 +44,21 @@ abstract class ApiBase
         );
     }
 
+    /**
+     * @param ContentCall $call
+     * @return array
+     */
+    private function mergeParams(ContentCall $call): array
+    {
+        $params = array_merge($call->getOptions(), ['headers' => $this->getHeaders()]);
+
+        if(isset($this->distributionTag) && $this->distributionTag !== null) {
+            $params['query']['distribution_tag'] = $this->distributionTag;
+        }
+
+        return $params;
+    }
+
     public function handleCallCollection(CallCollection $calls)
     {
         $requests = [];
@@ -49,7 +66,7 @@ abstract class ApiBase
             $requests[$call->getKey()] = $this->asyncRequest(
                 $call->getMethod(),
                 $call->getPath(),
-                array_merge($call->getOptions(), ['headers' => $this->getHeaders()])
+                $this->mergeParams($call)
             );
         }
         try {
@@ -64,6 +81,7 @@ abstract class ApiBase
             if($exception->getResponse()->getStatusCode() === 401) {
                 throw new FrisbeeAuthorizationException('Call not authorized');
             }
+
 
             throw new FrisbeeException('There has been an error in the system');
         }
