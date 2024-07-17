@@ -56,6 +56,10 @@ abstract class ApiBase
             $params['query']['distribution_tag'] = $this->distributionTag;
         }
 
+        if(isset($this->lang) && $this->lang !== null) {
+            $params['query']['lang'] = $this->lang;
+        }
+
         return $params;
     }
 
