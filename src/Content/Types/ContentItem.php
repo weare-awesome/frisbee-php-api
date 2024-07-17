@@ -64,6 +64,9 @@ class ContentItem implements ContentItemInterface
     public static function make(array $a = [], $cdn = '')
     {
 
+        if(array_key_exists('meta', $a) === false) {
+           $a['meta'] = [];
+        }
         try {
             return new static($a['title'], self::handleBodyInParams($a), $a['type'], $a['fixed'], $a['order'], $a['meta'], $cdn);
         } catch (\Exception $exception) {
