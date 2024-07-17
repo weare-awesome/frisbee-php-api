@@ -16,6 +16,9 @@ class ReadAPI extends ApiBase
 
     protected ?string $distributionTag = null;
 
+    protected ?string $lang = null;
+
+
     /**
      * @param Client $client
      * @param string $apiToken
@@ -26,6 +29,13 @@ class ReadAPI extends ApiBase
     {
         $this->distributionId = $distributionId;
         parent::__construct($client, $apiToken, $readAPIUrl);
+    }
+
+
+    public function inLang(?string $language = null): ReadApi
+    {
+        $this->lang = $language;
+        return $this;
     }
 
     /**
