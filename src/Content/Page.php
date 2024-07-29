@@ -30,6 +30,7 @@ class Page extends BasePage
         'content_type',
         'content_version',
         'menus',
+        'distribution',
         'distribution_settings',
         'meta',
         'tags'
@@ -70,6 +71,10 @@ class Page extends BasePage
     }
 
 
+    /**
+     * @param $format
+     * @return string
+     */
     public function publishedFormatted($format = 'd/m/Y')
     {
         return Carbon::make($this->published)->format($format);
@@ -176,6 +181,25 @@ class Page extends BasePage
 
         return $index !== false ? $this->sections[$index] : new NullSection($name);
 
+    }
+
+
+    /**
+     * @return array
+     */
+    public function availableLanguages(): array
+    {
+
+        if(isset($this->distribution) && array_key_exists('distribution_language_maps', $this->distribution)) {
+            return array_filter(array_map(function ($map) {
+                if(array_key_exists('language', $map)) {
+                    return $map['language'];
+                }
+                return false;
+            }, $this->distribution['distribution_language_maps']));
+        }
+
+        return [];
     }
 
     /**
