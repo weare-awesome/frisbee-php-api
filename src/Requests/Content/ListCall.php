@@ -72,7 +72,7 @@ class ListCall implements ContentCall
         $this->orderDirection = $orderDirection;
         $this->contentTypeIds = $contentTypeIds;
         $this->tags = $tags;
-        $this->excludeTags = [];
+        $this->excludeTags = $excludeTags;
     }
 
     /**
@@ -104,6 +104,7 @@ class ListCall implements ContentCall
      */
     public function getOptions(): array
     {
+
         return [
             'query' => [
                 'distribution_id' => $this->distributionId,
