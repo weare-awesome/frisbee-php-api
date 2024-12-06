@@ -46,6 +46,12 @@ class ListCall implements ContentCall
      */
     protected Response $response;
 
+
+    protected array $tags = [];
+
+    protected array $excludeTags = [];
+
+
     /**
      * ContentListCall constructor.
      */
@@ -55,7 +61,9 @@ class ListCall implements ContentCall
         int $page = 1,
         int $perPage = 100,
         string $orderBy = 'publish_date',
-        string $orderDirection = 'asc'
+        string $orderDirection = 'asc',
+        array $tags  = [],
+        array $excludeTags = []
     ) {
         $this->key = $key;
         $this->page = $page;
@@ -63,6 +71,8 @@ class ListCall implements ContentCall
         $this->orderBy = $orderBy;
         $this->orderDirection = $orderDirection;
         $this->contentTypeIds = $contentTypeIds;
+        $this->tags = $tags;
+        $this->excludeTags = [];
     }
 
     /**
@@ -101,7 +111,9 @@ class ListCall implements ContentCall
                 'order_by' => $this->orderBy,
                 'order_direction' => $this->orderDirection,
                 'per_page' => $this->perPage,
-                'page' => $this->page
+                'page' => $this->page,
+                'tag_ids' => $this->tags,
+                'exclude_tag_ids' => $this->excludeTags
             ]
         ];
     }
