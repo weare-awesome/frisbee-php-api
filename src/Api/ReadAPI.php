@@ -9,6 +9,8 @@ use WeAreAwesome\FrisbeePHPAPI\Requests\Content\DistributionCall;
 use WeAreAwesome\FrisbeePHPAPI\Requests\Content\ListCall;
 use WeAreAwesome\FrisbeePHPAPI\Requests\Content\PageCall;
 use WeAreAwesome\FrisbeePHPAPI\Requests\Content\PageRequest;
+use WeAreAwesome\FrisbeePHPAPI\Requests\Content\PagesCall;
+use WeAreAwesome\FrisbeePHPAPI\Requests\Content\PagesRequest;
 
 class ReadAPI extends ApiBase
 {
@@ -43,14 +45,15 @@ class ReadAPI extends ApiBase
      * @param PageRequest|PageCall $request
      * @return Page
      */
-    public function page(PageRequest|PageCall $request):Page
+    public function page(PageRequest|PageCall $request): Page
     {
-        if($request instanceof PageRequest === true) {
+        if ($request instanceof PageRequest === true) {
             return $this->handlePageRequest($request);
         }
 
         return $this->handlePageCall($request);
     }
+
 
 
     /**
@@ -87,6 +90,18 @@ class ReadAPI extends ApiBase
         return $call->toContentResource();
     }
 
+
+    public function pages(PagesRequest $call)
+    {
+        $call = PagesCall::make($call->getPaths(), $this->distributionId);
+        $callCollection = new ContentCallCollection();
+        $callCollection->addCall($call);
+        $this->handleCallCollection($callCollection);
+        return $call->toContentResource();
+
+    }
+
+
     /**
      * @param PageRequest $request
      * @return Page
@@ -94,7 +109,8 @@ class ReadAPI extends ApiBase
      * @throws \WeAreAwesome\FrisbeePHPAPI\Exceptions\FrisbeeException
      * @throws \WeAreAwesome\FrisbeePHPAPI\Requests\Content\Exceptions\FrisbeeContentNotFound
      */
-    private function handlePageRequest(PageRequest $request): Page {
+    private function handlePageRequest(PageRequest $request): Page
+    {
 
         $pageCall = PageCall::make($request->path, $this->distributionId);
         $callCollection = new ContentCallCollection();
@@ -148,7 +164,6 @@ class ReadAPI extends ApiBase
     {
         return new static($client, $apiToken, $distributionId, $readAPIUrl);
     }
-
 
 
 }
