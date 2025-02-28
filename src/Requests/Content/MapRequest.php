@@ -4,6 +4,7 @@ namespace WeAreAwesome\FrisbeePHPAPI\Requests\Content;
 
 use GuzzleHttp\Psr7\Response;
 use WeAreAwesome\FrisbeePHPAPI\Content\ContentResource;
+use WeAreAwesome\FrisbeePHPAPI\Content\SiteMap;
 
 class MapRequest implements ContentCall
 {
@@ -71,8 +72,6 @@ class MapRequest implements ContentCall
      */
     public function toContentResource() : ContentResource {
         $data = json_decode($this->response->getBody()->getContents(), true);
-        dd($data);
-        $page = DistributionPage::make($data['data']);
-        return $page;
+        return SiteMap::make($data['data']);
     }
 }
