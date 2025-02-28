@@ -7,6 +7,7 @@ use WeAreAwesome\FrisbeePHPAPI\Content\Page;
 use WeAreAwesome\FrisbeePHPAPI\Requests\Content\ContentCallCollection;
 use WeAreAwesome\FrisbeePHPAPI\Requests\Content\DistributionCall;
 use WeAreAwesome\FrisbeePHPAPI\Requests\Content\ListCall;
+use WeAreAwesome\FrisbeePHPAPI\Requests\Content\MapRequest;
 use WeAreAwesome\FrisbeePHPAPI\Requests\Content\PageCall;
 use WeAreAwesome\FrisbeePHPAPI\Requests\Content\PageRequest;
 use WeAreAwesome\FrisbeePHPAPI\Requests\Content\PagesCall;
@@ -64,6 +65,16 @@ class ReadAPI extends ApiBase
     {
         $this->distributionTag = $distributionTagOverride;
         return $this;
+    }
+
+    public function map()
+    {
+        $callCollection = new ContentCallCollection();
+        $call = new MapRequest();
+        $call->setDistributionId($this->distributionId);
+        $callCollection->addCall($call);
+        $this->handleCallCollection($callCollection);
+        return $call->toContentResource();
     }
 
     /**
