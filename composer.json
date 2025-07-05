@@ -1,6 +1,7 @@
 {
   "name": "weare-awesome/frisbee-php-api",
   "license": "Apache-2.0",
+  "version" : "1.0.0",
   "require": {
     "php": "^8.0.2",
     "guzzlehttp/guzzle": "^7.2",
