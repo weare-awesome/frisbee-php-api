@@ -4,7 +4,7 @@
   "require": {
     "php": "^8.0.2",
     "guzzlehttp/guzzle": "^7.8.2",
-    "illuminate/collections": ">= 12.19.0",
+    "illuminate/collections": ">= 10.0.0",
     "nesbot/carbon": "^3.8.4"
   },
   "autoload": {
