@@ -63,7 +63,9 @@ class ListCall implements ContentCall
         string $orderBy = 'publish_date',
         string $orderDirection = 'asc',
         array $tags  = [],
-        array $excludeTags = []
+        array $excludeTags = [],
+        ?string $publishedAfter = null,
+        ?string $publishedBefore = null
     ) {
         $this->key = $key;
         $this->page = $page;
@@ -73,6 +75,9 @@ class ListCall implements ContentCall
         $this->contentTypeIds = $contentTypeIds;
         $this->tags = $tags;
         $this->excludeTags = $excludeTags;
+        $this->publishedAfter = $publishedAfter;
+        $this->publishedBefore = $publishedBefore;
+
     }
 
     /**
@@ -114,7 +119,9 @@ class ListCall implements ContentCall
                 'per_page' => $this->perPage,
                 'page' => $this->page,
                 'tag_ids' => $this->tags,
-                'exclude_tag_ids' => $this->excludeTags
+                'exclude_tag_ids' => $this->excludeTags,
+                'publised_after' => $this->publishedAfter,
+                'publised_before' => $this->publishedBefore,
             ]
         ];
     }
