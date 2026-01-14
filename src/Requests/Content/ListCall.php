@@ -120,8 +120,8 @@ class ListCall implements ContentCall
                 'page' => $this->page,
                 'tag_ids' => $this->tags,
                 'exclude_tag_ids' => $this->excludeTags,
-                'publised_after' => $this->publishedAfter,
-                'publised_before' => $this->publishedBefore,
+                'published_after' => $this->publishedAfter,
+                'published_before' => $this->publishedBefore,
             ]
         ];
     }
