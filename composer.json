@@ -1,11 +1,12 @@
 {
   "name": "weare-awesome/frisbee-php-api",
+  "description": "Read-only PHP client for the Frisbee headless CMS Read API.",
   "license": "Apache-2.0",
   "require": {
     "php": "^8.0.2",
     "guzzlehttp/guzzle": "^7.8.2",
-    "illuminate/collections": ">= 10.0.0",
-    "nesbot/carbon": "^3.8.4"
+    "illuminate/collections": "^9.19|^10.0|^11.0|^12.0|^13.0",
+    "nesbot/carbon": "^2.62|^3.0"
   },
   "autoload": {
     "psr-4": {

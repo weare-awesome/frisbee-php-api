@@ -20,6 +20,19 @@ mutate anything.
 Return types use `Illuminate\Support\Collection`, so it feels native in Laravel but works in any
 PHP app.
 
+### Version compatibility
+
+Laravel 13 dropped Carbon 2. Version `2.x` widens the Carbon and Collections constraints to span
+both eras, so it installs cleanly on everything from Laravel 9 to 13:
+
+| SDK version | Laravel   | `nesbot/carbon` | Status                     |
+|-------------|-----------|-----------------|----------------------------|
+| `^2.0`      | 9 – 13    | `^2.62\|^3.0`   | Current                    |
+| `^1.0`      | 9 – 12    | `^2.62`         | Maintenance (Carbon 2 only) |
+
+There are no code changes between the lines beyond dependency constraints and `ListCall`'s
+publish-date filtering — upgrading from `1.x` to `2.x` requires no changes to your integration.
+
 ## Install
 
 ```bash
