@@ -1,11 +1,11 @@
 {
   "name": "weare-awesome/frisbee-php-api",
   "license": "Apache-2.0",
-  "version" : "1.0.0",
+  "version" : "1.0.1",
   "require": {
     "php": "^8.0.2",
     "guzzlehttp/guzzle": "^7.2",
-    "illuminate/collections": ">= 9.19",
+    "illuminate/collections": "^9.19|^10.0|^11.0|^12.0",
     "nesbot/carbon": "^2.62"
   },
   "autoload": {
