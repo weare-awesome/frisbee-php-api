@@ -5,12 +5,9 @@ namespace WeAreAwesome\FrisbeePHPAPI\Content\Sections;
 
 use Illuminate\Support\Collection;
 use WeAreAwesome\FrisbeePHPAPI\Content\Exceptions\FrisbeeMalformedContentException;
-use WeAreAwesome\FrisbeePHPAPI\Content\Types\ContentItem;
+use WeAreAwesome\FrisbeePHPAPI\Content\Types\ContentItemFactory;
 use WeAreAwesome\FrisbeePHPAPI\Content\Types\ContentItemInterface;
-use WeAreAwesome\FrisbeePHPAPI\Content\Types\Gallery;
-use WeAreAwesome\FrisbeePHPAPI\Content\Types\Image;
 use WeAreAwesome\FrisbeePHPAPI\Content\Types\NullContent;
-use WeAreAwesome\FrisbeePHPAPI\Content\Types\Text;
 
 class Section extends BaseSection implements SectionInterface
 {
@@ -61,28 +58,7 @@ class Section extends BaseSection implements SectionInterface
     {
         $c = new Collection();
         foreach ($contents as $content) {
-            switch ($content['type']) {
-                case('text-box'):
-                {
-                    $c = $c->add(Text::make($content));
-                    break;
-                }
-                case('image'):
-                {
-                    $c = $c->add(Image::make($content, $this->cdnUrl));
-                    break;
-                }
-                case('gallery'):
-                    $c = $c->add(Gallery::make($content, $this->cdnUrl));
-                    break;
-
-
-                default:
-                {
-                    $c = $c->add(ContentItem::make($content));
-                }
-            }
-
+            $c = $c->add(ContentItemFactory::make($content, $this->cdnUrl));
         }
         return $c;
     }

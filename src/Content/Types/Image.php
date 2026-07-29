@@ -17,15 +17,27 @@ class Image extends ContentItem
     const SMALL = 'sm';
 
     /**
-     *
+     * Note: the variant key is 'med' (not 'md') — that is what Frisbee stores
+     * in image_variants for every image, top-level or nested.
      */
-    const MEDIUM = 'md';
+    const MEDIUM = 'med';
 
     /**
      *
      */
     const LARGE = 'lg';
 
+    /**
+     * Candidate image_variants keys for each requested size. Medium tolerates
+     * both spellings so a legacy 'md' request — or legacy 'md' data — still
+     * resolves; the canonical key Frisbee writes is 'med'.
+     */
+    const SIZE_KEYS = [
+        self::SMALL  => ['sm'],
+        self::MEDIUM => ['med', 'md'],
+        'md'         => ['med', 'md'],
+        self::LARGE  => ['lg'],
+    ];
 
 
     /**
@@ -36,8 +48,10 @@ class Image extends ContentItem
     {
         $variants = $this->meta('image_variants', []);
 
-        if(array_key_exists($size, $variants)) {
-            return $this->stringToUrl($variants[$size]);
+        foreach (self::SIZE_KEYS[$size] ?? [$size] as $key) {
+            if (array_key_exists($key, $variants) && $variants[$key] !== '' && $variants[$key] !== null) {
+                return $this->stringToUrl($variants[$key]);
+            }
         }
 
         return $this->stringToUrl($this->body);

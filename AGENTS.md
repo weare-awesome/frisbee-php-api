@@ -278,23 +278,36 @@ Only these keys are populated (anything else returns `null`):
 ### Content items
 
 `$section->content('title')` returns a `ContentItemInterface`. Concrete types are chosen by the
-item's `type`: `text-box` → `Text`, `image` → `Image`, `gallery` → `Gallery`, everything else →
-generic `ContentItem`. Common members:
+item's `type`: `text-box` → `Text`, `image` → `Image`, `gallery` → `Gallery`, `video-file` →
+`VideoFile`, `text-input-select` → `Select`, `component` → `Component`, everything else → generic
+`ContentItem`. Common members:
 
 | Member | Applies to | Returns | Notes |
 |--------|-----------|---------|-------|
 | `raw()` | all | string | The raw body/value. **Your primary getter for text.** |
 | `notEmpty()` / `empty()` | all | bool | Presence check. |
-| `type` (prop) | all | string | e.g. `text-box`, `image`, `gallery`, `video`, `wysiwyg`. |
+| `type` (prop) | all | string | e.g. `text-box`, `image`, `gallery`, `video`, `video-file`, `wysiwyg`. |
 | `title` / `order` (props) | all | string / int | |
 | `meta(string $key, $default='')` | all | mixed | Item-level metadata. |
 | `render(array $attrs = [])` | all | string | Wraps body in a `<span>` with Frisbee edit tags. |
-| `url()` | `Image` | string | Full image URL (CDN-resolved). |
-| `variant(string $size)` | `Image` | string | Sized variant URL; falls back to `url()`. Sizes: `Image::SMALL`='sm', `Image::MEDIUM`='md', `Image::LARGE`='lg'. |
+| `url()` | `Image`, `VideoFile` | string | Full CDN-resolved URL. For `VideoFile`, the canonical source (body, else preferred format). |
+| `variant(string $size)` | `Image` | string | Sized variant URL; falls back to `url()`. Sizes: `Image::SMALL`='sm', `Image::MEDIUM`='med', `Image::LARGE`='lg'. |
 | `items()` | `Gallery` | `Image[]` | The gallery's images (each a full `Image`). |
+| `variant(string $format)` | `VideoFile` | string | URL for one format; falls back to `url()`. Formats: `VideoFile::WEBM`='webm', `VideoFile::MP4`='mp4', `VideoFile::OGG`='ogg'. |
+| `sources()` | `VideoFile` | array | Ordered `<source>` list (preferred first): each `['format','mime','file','url']`. |
+| `poster()` | `VideoFile` | string | Poster image URL (resolved under `/images`), `''` if none. |
+| `fallback()` | `VideoFile` | string | Text shown when no source can play. |
+| `preferredFormat()` | `VideoFile` | string | Format key browsers should try first (default `webm`). |
+| `value()` | `Select` | string | The chosen option's value (alias of `raw()`). |
+| `is(string $value)` | `Select` | bool | Selected value === `$value` (strict; the machine value, not the label). |
+| `in(array $values)` | `Select` | bool | Selected value is one of `$values`. |
+| `rows()` | `Component` | `Collection<ComponentRow>` | Authored repeater rows; each row's sub-fields hydrate to their real types. |
+| `content(string $title)` | `ComponentRow` | `ContentItemInterface` | One sub-field by title (the schema `label`, fallback `name`). Missing → `NullContent`. |
+| `all()` | `ComponentRow` | `Collection` | All sub-fields in the row, sorted by order. |
 
 Image URLs are resolved against the page's `cdn_url` (a bare filename becomes
-`{cdn_url}/images/{filename}`; an absolute `http…` value is returned as-is).
+`{cdn_url}/images/{filename}`; an absolute `http…` value is returned as-is). `VideoFile` source
+files resolve the same way but under **`/videos/`**; its poster resolves under `/images/`.
 
 ### Menus
 
@@ -532,21 +545,23 @@ integration. Only `name` and `type` matter to your code.
 ### 11.2 Field type reference (schema `type` → runtime → how you read it)
 
 This is the crucial mapping. The SDK turns each authored field into a runtime object based on its
-`type` string (in `Section::generate()`), and the runtime object's `->type` equals this same
-string. Only three types get special classes; **everything else becomes a generic `ContentItem`**,
-which means `->url()` / `->variant()` / `->items()` return empty on them — don't call those on a
-non-image/gallery field.
+`type` string (via `ContentItemFactory`, used by both `Section` and `Component`), and the runtime
+object's `->type` equals this same string. Six types get dedicated classes (`Text`, `Image`,
+`Gallery`, `VideoFile`, `Select`, `Component`); **everything else becomes a generic `ContentItem`**,
+which means media/typed helpers (`->url()` / `->variant()` / `->items()` / `->sources()` /
+`->rows()`) return empty on them — match the reader to the `type`.
 
 | Schema `type`        | Frisbee editor input        | Runtime class  | Read it with                          |
 |----------------------|-----------------------------|----------------|---------------------------------------|
 | `text-input`         | single-line text            | `ContentItem`  | `->raw()` → string                    |
 | `text-box`           | multi-line plain text       | `Text`         | `->raw()` → string                    |
 | `wysiwyg`            | rich-text HTML editor       | `ContentItem`  | `->raw()` → HTML (sanitise before echo) |
-| `image`              | image picker                | `Image`        | `->url()`, `->variant('sm'\|'md'\|'lg')`; `->raw()` = filename (use for presence) |
-| `video`              | video field                 | `ContentItem`  | `->raw()` → stream/embed id           |
-| `text-input-select`  | dropdown (needs `meta`)     | `ContentItem`  | `->raw()` → the chosen `value`        |
+| `image`              | image picker                | `Image`        | `->url()`, `->variant('sm'\|'med'\|'lg')`; `->raw()` = filename (use for presence) |
+| `video`              | embed field (YouTube/Vimeo) | `ContentItem`  | `->raw()` → embed id; provider in `->meta('type')` |
+| `video-file`         | self-hosted multi-format video | `VideoFile` | `->sources()`, `->poster()`, `->fallback()`; `->url()`/`->variant('webm'\|'mp4'\|'ogg')` |
+| `text-input-select`  | dropdown (needs `meta`)     | `Select`       | `->value()`/`->raw()` → chosen `value`; `->is('x')`/`->in([...])` to branch |
 | `gallery`            | grouped images              | `Gallery`      | `->items()` → `Image[]`               |
-| `component`          | **repeater** (needs `config`) | `ContentItem` | nested rows in `->meta()` — see §11.3 Shape B |
+| `component`          | **repeater** (needs `config`) | `Component`   | `->rows()` → `ComponentRow[]`; each `->content('SubField')` hydrated — see §11.3 Shape B |
 
 A **select** field carries its options in `meta`:
 
@@ -565,8 +580,61 @@ A **select** field carries its options in `meta`:
 }
 ```
 
-At runtime `->content('allow_lightbox')->raw()` returns `"yes"` or `"no"` (the `value`, not the
-`label`). Compare against the `value`s you defined.
+At runtime a `text-input-select` hydrates into a **`Select`**. `->value()` (or `->raw()`) returns
+the chosen option's machine `value` — `"yes"` or `"no"` here, **not** the human `label`. To display
+content conditionally, branch on it with `->is('yes')` (strict equality) or `->in(['yes','maybe'])`
+rather than comparing `raw()` by hand:
+
+```blade
+@if($page->section('Gallery')->content('allow_lightbox')->is('yes'))
+    <x-lightbox :images="$images" />
+@endif
+```
+
+The options list (`meta.options`) lives in the content-type **schema**, not in the page data, so it
+is not readable from the `Select` item at runtime — you already know the values you defined, so
+compare against those.
+
+A **`video-file`** field is a self-hosted, multi-format HTML5 video — distinct from `video`, which
+is a YouTube/Vimeo embed id. The author uploads one file per format (WebM/MP4/Ogg) plus an optional
+poster and fallback text; the SDK hydrates it into a **`VideoFile`** (not a generic `ContentItem`).
+The authored shape:
+
+```jsonc
+{
+  "title": "background_video",
+  "type": "video-file",
+  "body": "clip.webm",                 // canonical/preferred source filename
+  "meta": {
+    "sources":   { "webm": "clip.webm", "mp4": "clip.mp4", "ogg": "clip.ogg" },
+    "preferred": "webm",               // which format to try first
+    "poster":    "clip-poster.png",     // resolved under /images
+    "fallback":  "Your browser cannot play this video."
+  }
+}
+```
+
+Unlike `image`, video source files resolve under **`/videos/`** (`{cdn_url}/videos/{filename}`);
+the poster resolves under `/images/`. Don't hand-build these URLs or call `->url()` expecting an
+image path — use the `VideoFile` helpers, which resolve everything for you:
+
+```blade
+@php($video = $page->section('Hero')->content('background_video'))  {{-- VideoFile --}}
+@if($video->notEmpty())
+  <video controls poster="{{ $video->poster() }}">
+    @foreach($video->sources() as $source)   {{-- preferred format first --}}
+      <source src="{{ $source['url'] }}" type="{{ $source['mime'] }}">
+    @endforeach
+    {{ $video->fallback() }}
+  </video>
+@endif
+```
+
+`sources()` returns only the formats the author actually uploaded, preferred one first, each as
+`['format' => 'webm', 'mime' => 'video/webm', 'file' => 'clip.webm', 'url' => '…']`. `url()` gives
+the single canonical source (the `body`, or the first available format); `variant('mp4')` gives one
+specific format's URL and falls back to `url()` when that format is absent. Presence is
+`notEmpty()` / `empty()` — true only when no playable file resolves at all.
 
 ### 11.3 The section/field shapes (pick the right one)
 
@@ -621,74 +689,37 @@ lives under `config.items` — each item is a **core field** (`text-input`, `ima
 }
 ```
 
-**Verified runtime shape.** The SDK has **no dedicated `component` class** — a `component` field
-deserializes to a generic `ContentItem`, and the authored rows are carried in that item's
-**`meta.items`**. `meta.items` is an **array of rows**; each row is an **array of field objects**
-(plain associative arrays — the SDK does **not** hydrate them into `Text`/`Image`/`ContentItem`,
-so `->url()`/`->variant()` are unavailable and you read raw arrays). A single row from a real
-response looks like this:
-
-```jsonc
-// $page->section('Cards')->content('cards-component')->meta('items')[0]
-[
-  { "title": "Title",       "type": "text-box", "body": "Hello",              "meta": [] },
-  { "title": "CTA 1 Text",  "type": "text-box", "body": "Hello 2",            "meta": [] },
-  { "title": "CTA 1 Link",  "type": "text-box", "body": "https://google.com", "meta": [] },
-  { "title": "video",       "type": "video",    "body": "klrR2WGZkBw",        "meta": { "type": "youtube" } },
-  { "title": "image",       "type": "image",    "body": "cF8S16..._cm9ib3Q=.png",
-    "meta": { "image_variants": { "sm": "500_…png", "med": "800_…png", "lg": "1000_…png" } } }
-]
-```
-
-Two things to internalise from that payload:
-
-- **Each field is keyed by its runtime `title`, which is the schema item's `label` (falling back
-  to `name` when the label is null).** Here schema `name: "cta one text"` surfaces as
-  `title: "CTA 1 Text"`. This is the **opposite** of top-level fixed content (where the runtime
-  title is the *name* — that's why elsewhere you call `->content('cta_text')` with the name). To
-  avoid the confusion, **give every `component` sub-field a `label` equal to its `name`**, or read
-  strictly by the label string.
-- **Nested `image`/`video` are not hydrated**, so resolve them yourself: image URL =
-  `str_contains($body,'http') ? $body : "{$cdn_url}/images/{$body}"` (exactly what `Image::url()`
-  does); sized variants are in `meta.image_variants` with keys `sm`/`med`/`lg`; `video` fields
-  carry the provider in `meta.type` (`youtube`/`vimeo`) and the id/stream in `body`.
-
-Read a component like this (self-contained, no SDK image hydration available):
+**Runtime.** A `component` field hydrates to a **`Component`**. Call `->rows()` for a
+`Collection<ComponentRow>` (one per authored row); each `ComponentRow` hydrates its sub-fields to
+their **real runtime types** via the same factory the SDK uses for top-level content — so a nested
+`image` is a real `Image` (`->url()`/`->variant()`), a `video-file` a real `VideoFile`, a
+`text-input-select` a real `Select`, and so on. No raw-array plumbing, no manual URL building:
 
 ```blade
-@php
-  $component = $page->section('Cards')->content('cards-component'); // ContentItem, type 'component'
-  $cdn = $page->cdn_url;
-
-  $cards = array_map(function (array $row) use ($cdn) {
-      // index this row's fields by their runtime title (schema label ?? name)
-      $f = [];
-      foreach ($row as $field) { $f[strtolower($field['title'])] = $field; }
-
-      $imageBody = $f['image']['body'] ?? '';
-      $imageUrl  = $imageBody === '' ? '' :
-          (str_contains($imageBody, 'http') ? $imageBody : rtrim($cdn, '/') . '/images/' . $imageBody);
-
-      return [
-          'title'     => $f['title']['body']       ?? '',
-          'ctaText'   => $f['cta 1 text']['body']  ?? '',   // ← keyed by LABEL, lower-cased
-          'ctaLink'   => $f['cta 1 link']['body']  ?? '',
-          'video'     => $f['video']['body']       ?? '',   // provider: $f['video']['meta']['type']
-          'image'     => $imageUrl,
-          'imageLg'   => ($f['image']['meta']['image_variants']['lg'] ?? null)
-                            ? rtrim($cdn, '/') . '/images/' . $f['image']['meta']['image_variants']['lg'] : $imageUrl,
-      ];
-  }, $component->meta('items', []));   // ← the rows live in meta.items
-@endphp
-
-@foreach($cards as $card)
-  <x-card :card="$card" />
+@php($cards = $page->section('Cards')->content('cards-component'))   {{-- Component --}}
+@foreach($cards->rows() as $row)
+  <x-card
+    title="{{ $row->content('Title')->raw() }}"
+    ctaText="{{ $row->content('CTA 1 Text')->raw() }}"
+    ctaLink="{{ $row->content('CTA 1 Link')->raw() }}"
+    image="{{ $row->content('image')->variant(\WeAreAwesome\FrisbeePHPAPI\Content\Types\Image::LARGE) }}"
+    video="{{ $row->content('video')->raw() }}"   {{-- embed id; provider via ->meta('type') --}}
+  />
 @endforeach
 ```
 
-Because the SDK doesn't model this, the **clean, recommended integration** is to wrap that mapping
-in a small helper or a `Gallery`-style value object in your own app (resolving image URLs and
-variants once), rather than repeating the raw-array plumbing in every template.
+Read a row's sub-fields with `->content('Title')` (one by title) or `->all()` (every sub-field,
+sorted by order). One thing to keep in mind about the **title**:
+
+- **A component sub-field is addressed by its runtime `title`, which is the schema item's `label`
+  (falling back to `name` when the label is null).** So schema `name: "cta one text"` /
+  `label: "CTA 1 Text"` is read as `->content('CTA 1 Text')`. This is the **opposite** of top-level
+  fixed content (where the runtime title is the *name*). Lookups are case-insensitive, but to keep
+  reads predictable **give every `component` sub-field a `label` equal to its `name`**, or always
+  read by the label string. A miss returns a safe `NullContent` (§9), same as a section.
+
+The old approach — reading `->meta('items')` and resolving image/video URLs by hand — is no longer
+needed; `rows()` does it. `$component->empty()` / `->notEmpty()` report whether any rows exist.
 
 Prefer Shape B over Shape C for new content types with repeating structured entries. Reach for
 Shape C only when you deliberately want a **fixed, small number of slots** modelled as flat fields
@@ -844,15 +875,21 @@ together.**
   `_one…_nine` is the more common pattern here for repeaters.
 - **`label` may be `null` or duplicated** in the schema (e.g. several fields labelled "Icon one").
   That's a CMS-UI cosmetic only — irrelevant to your code, which keys on `name`.
-- **`->url()`/`->variant()` only work on `image` fields**; **`->items()` only on `gallery`.** On any
-  other type they return empty because it's a generic `ContentItem`. Match the reader to the `type`.
+- **`->url()`/`->variant()` only work on `image` and `video-file` fields** (for `video-file` also
+  `->sources()`/`->poster()`/`->fallback()`); **`->items()` only on `gallery`.** On any other type
+  they return empty because it's a generic `ContentItem`. Match the reader to the `type`.
+- **`video` (embed) vs `video-file` (self-hosted) are different types.** `video` is a generic
+  `ContentItem` (`->raw()` = embed id, provider in `->meta('type')`); `video-file` is a `VideoFile`
+  with `->sources()`/`->url()`/`->poster()`. Don't call image/gallery helpers on either by mistake.
 - **`video` fields return an id/stream string** via `->raw()`, not a URL — pass it to your player
   component.
-- **Select fields compare on `value`**, not the human `label`.
-- **`component` (repeater) rows invert the title rule and aren't hydrated.** Inside a `component`,
-  each sub-field is keyed by its **`label`** (fallback `name`), the opposite of top-level fixed
-  content; and the rows in `meta.items` are raw arrays, so `image`/`video` need manual URL/variant
-  resolution. Give sub-fields `label == name` to keep reads predictable. (See §11.3 Shape B.)
+- **Select fields compare on `value`**, not the human `label`. Use the `Select` helpers
+  `->is('x')` / `->in([...])` (strict equality on the value) to branch content on the selection.
+- **`component` (repeater) rows invert the title rule.** Read them with `->rows()` →
+  `$row->content('SubField')`; sub-fields **are** hydrated to their real types (`Image`,
+  `VideoFile`, `Select`, …), so no manual URL/variant plumbing. But a sub-field is keyed by its
+  **`label`** (fallback `name`), the opposite of top-level fixed content. Give sub-fields
+  `label == name` to keep reads predictable. (See §11.3 Shape B.)
 - **Presence is truthiness of `->raw()`.** Use it to gate optional fields and to trim the empty
   tail of a Shape-C ordinal repeater. There is no "field exists" flag beyond content being non-empty.
 - **`displayable: false` sections still need data**; they just can't be toggled off by the author.
@@ -866,9 +903,9 @@ together.**
    table). Add `meta.options` for selects, `config.items` for `component` repeaters. Set
    `displayable` (true unless it must always show).
 4. Emit the **schema JSON** (array of section objects) — this is what gets created in Frisbee.
-5. Emit the **integration** that reads the *same* names: `section()` + `content()` for A; read the
-   `component` field's `meta` rows for B; an ordinal loop for C; `->all()` + `type` switch for D —
-   each guarded by `isDisplayed()`.
+5. Emit the **integration** that reads the *same* names: `section()` + `content()` for A;
+   `->content('field')->rows()` then `$row->content('SubField')` for B; an ordinal loop for C;
+   `->all()` + `type` switch for D — each guarded by `isDisplayed()`.
 6. Cross-check every `content('…')` / `section('…')` string against the schema `name`s. Any string
    with no matching schema field is a bug that will render blank.
 
@@ -907,7 +944,7 @@ WeAreAwesome\FrisbeePHPAPI\Content\Page                    // returned page
 WeAreAwesome\FrisbeePHPAPI\Content\ContentList             // returned list (content() + pagination())
 WeAreAwesome\FrisbeePHPAPI\Content\SiteMap                 // returned map (getData())
 WeAreAwesome\FrisbeePHPAPI\Content\Sections\Section        // section (isDisplayed/content/all)
-WeAreAwesome\FrisbeePHPAPI\Content\Types\{Text,Image,Gallery,ContentItem}
+WeAreAwesome\FrisbeePHPAPI\Content\Types\{Text,Image,Gallery,VideoFile,Select,Component,ComponentRow,ContentItem}
 WeAreAwesome\FrisbeePHPAPI\Content\Menus\{Menu,MenuItem}
 WeAreAwesome\FrisbeePHPAPI\Exceptions\{FrisbeeException,FrisbeeAuthorizationException}
 WeAreAwesome\FrisbeePHPAPI\Requests\Content\Exceptions\FrisbeeContentNotFound
