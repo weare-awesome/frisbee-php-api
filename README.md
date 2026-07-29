@@ -206,8 +206,8 @@ $section->all();                    // Collection of every item, sorted by order
 ```
 
 Content items resolve to a class based on their `type`: `text-box` → `Text`, `image` → `Image`,
-`gallery` → `Gallery`, `video-file` → `VideoFile`, `text-input-select` → `Select`, `component` →
-`Component`, everything else → generic `ContentItem`.
+`gallery` → `Gallery`, `video-file` → `VideoFile`, `text-input-select` → `Select`, `link` → `Link`,
+`component` → `Component`, everything else → generic `ContentItem`.
 
 | Member | Applies to | Notes |
 |--------|-----------|-------|
@@ -224,6 +224,8 @@ Content items resolve to a class based on their `type`: `text-box` → `Text`, `
 | `poster()` / `fallback()` / `preferredFormat()` | `VideoFile` | Poster image URL, fallback text, preferred format key |
 | `value()` | `Select` | The chosen option's value (alias of `raw()`) |
 | `is(string $value)` / `in(array $values)` | `Select` | Test the selection — branch content on it |
+| `url()` | `Link` | The link target (href); also `Image`/`VideoFile` |
+| `displayText()` / `hasDisplayText()` | `Link` | Display text (falls back to the URL); whether one was set |
 | `rows()` | `Component` | `Collection<ComponentRow>`; each row's sub-fields hydrate to their real types |
 | `content(string $title)` / `all()` | `ComponentRow` | Read one sub-field by title / all sub-fields (sorted) |
 
@@ -273,6 +275,15 @@ standard multi-format `<video>` element with a poster and fallback text:
     <x-features-grid :items="$items" />
 @elseif($layout->in(['list', 'compact']))
     <x-features-list :items="$items" :dense="$layout->is('compact')" />
+@endif
+```
+
+**Link (`link`):** `url()` is the href, `displayText()` the label (falling back to the URL):
+
+```blade
+@php($cta = $page->section('Hero')->content('cta'))
+@if($cta->notEmpty())
+    <a href="{{ $cta->url() }}">{{ $cta->displayText() }}</a>
 @endif
 ```
 
@@ -335,7 +346,7 @@ WeAreAwesome\FrisbeePHPAPI\Content\Page
 WeAreAwesome\FrisbeePHPAPI\Content\ContentList             // content() + pagination()
 WeAreAwesome\FrisbeePHPAPI\Content\SiteMap                 // getData()
 WeAreAwesome\FrisbeePHPAPI\Content\Sections\Section
-WeAreAwesome\FrisbeePHPAPI\Content\Types\{Text,Image,Gallery,VideoFile,Select,Component,ComponentRow,ContentItem}
+WeAreAwesome\FrisbeePHPAPI\Content\Types\{Text,Image,Gallery,VideoFile,Select,Link,Component,ComponentRow,ContentItem}
 WeAreAwesome\FrisbeePHPAPI\Content\Menus\{Menu,MenuItem}
 WeAreAwesome\FrisbeePHPAPI\Exceptions\{FrisbeeException,FrisbeeAuthorizationException}
 WeAreAwesome\FrisbeePHPAPI\Requests\Content\Exceptions\FrisbeeContentNotFound

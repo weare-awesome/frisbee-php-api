@@ -279,8 +279,8 @@ Only these keys are populated (anything else returns `null`):
 
 `$section->content('title')` returns a `ContentItemInterface`. Concrete types are chosen by the
 item's `type`: `text-box` → `Text`, `image` → `Image`, `gallery` → `Gallery`, `video-file` →
-`VideoFile`, `text-input-select` → `Select`, `component` → `Component`, everything else → generic
-`ContentItem`. Common members:
+`VideoFile`, `text-input-select` → `Select`, `link` → `Link`, `component` → `Component`, everything
+else → generic `ContentItem`. Common members:
 
 | Member | Applies to | Returns | Notes |
 |--------|-----------|---------|-------|
@@ -301,6 +301,9 @@ item's `type`: `text-box` → `Text`, `image` → `Image`, `gallery` → `Galler
 | `value()` | `Select` | string | The chosen option's value (alias of `raw()`). |
 | `is(string $value)` | `Select` | bool | Selected value === `$value` (strict; the machine value, not the label). |
 | `in(array $values)` | `Select` | bool | Selected value is one of `$values`. |
+| `url()` | `Link` | string | The link target (href) — absolute URL or root-relative path, as authored. |
+| `displayText()` | `Link` | string | Display text; falls back to the URL when none was set. |
+| `hasDisplayText()` | `Link` | bool | Whether explicit display text was set. |
 | `rows()` | `Component` | `Collection<ComponentRow>` | Authored repeater rows; each row's sub-fields hydrate to their real types. |
 | `content(string $title)` | `ComponentRow` | `ContentItemInterface` | One sub-field by title (the schema `label`, fallback `name`). Missing → `NullContent`. |
 | `all()` | `ComponentRow` | `Collection` | All sub-fields in the row, sorted by order. |
@@ -546,8 +549,8 @@ integration. Only `name` and `type` matter to your code.
 
 This is the crucial mapping. The SDK turns each authored field into a runtime object based on its
 `type` string (via `ContentItemFactory`, used by both `Section` and `Component`), and the runtime
-object's `->type` equals this same string. Six types get dedicated classes (`Text`, `Image`,
-`Gallery`, `VideoFile`, `Select`, `Component`); **everything else becomes a generic `ContentItem`**,
+object's `->type` equals this same string. Seven types get dedicated classes (`Text`, `Image`,
+`Gallery`, `VideoFile`, `Select`, `Link`, `Component`); **everything else becomes a generic `ContentItem`**,
 which means media/typed helpers (`->url()` / `->variant()` / `->items()` / `->sources()` /
 `->rows()`) return empty on them — match the reader to the `type`.
 
@@ -560,6 +563,7 @@ which means media/typed helpers (`->url()` / `->variant()` / `->items()` / `->so
 | `video`              | embed field (YouTube/Vimeo) | `ContentItem`  | `->raw()` → embed id; provider in `->meta('type')` |
 | `video-file`         | self-hosted multi-format video | `VideoFile` | `->sources()`, `->poster()`, `->fallback()`; `->url()`/`->variant('webm'\|'mp4'\|'ogg')` |
 | `text-input-select`  | dropdown (needs `meta`)     | `Select`       | `->value()`/`->raw()` → chosen `value`; `->is('x')`/`->in([...])` to branch |
+| `link`               | URL + display text          | `Link`         | `->url()` → href; `->displayText()` → label (falls back to URL) |
 | `gallery`            | grouped images              | `Gallery`      | `->items()` → `Image[]`               |
 | `component`          | **repeater** (needs `config`) | `Component`   | `->rows()` → `ComponentRow[]`; each `->content('SubField')` hydrated — see §11.3 Shape B |
 
@@ -594,6 +598,18 @@ rather than comparing `raw()` by hand:
 The options list (`meta.options`) lives in the content-type **schema**, not in the page data, so it
 is not readable from the `Select` item at runtime — you already know the values you defined, so
 compare against those.
+
+A **`link`** field hydrates into a **`Link`**: the URL is stored in the body (an absolute
+`https://…` or a root-relative `/path`), the display text in `meta.display_text`. Read the target
+with `->url()` and the label with `->displayText()` (which falls back to the URL when no text was
+set); `->hasDisplayText()` tells you whether the author set one. `->raw()` also returns the URL.
+
+```blade
+@php($cta = $page->section('Hero')->content('cta'))   {{-- Link --}}
+@if($cta->notEmpty())
+  <a href="{{ $cta->url() }}">{{ $cta->displayText() }}</a>
+@endif
+```
 
 A **`video-file`** field is a self-hosted, multi-format HTML5 video — distinct from `video`, which
 is a YouTube/Vimeo embed id. The author uploads one file per format (WebM/MP4/Ogg) plus an optional
@@ -875,9 +891,10 @@ together.**
   `_one…_nine` is the more common pattern here for repeaters.
 - **`label` may be `null` or duplicated** in the schema (e.g. several fields labelled "Icon one").
   That's a CMS-UI cosmetic only — irrelevant to your code, which keys on `name`.
-- **`->url()`/`->variant()` only work on `image` and `video-file` fields** (for `video-file` also
-  `->sources()`/`->poster()`/`->fallback()`); **`->items()` only on `gallery`.** On any other type
-  they return empty because it's a generic `ContentItem`. Match the reader to the `type`.
+- **`->url()` works on `image`, `video-file` and `link` fields** (`->variant()` on `image`/`video-file`;
+  `->sources()`/`->poster()`/`->fallback()` on `video-file`; `->displayText()` on `link`);
+  **`->items()` only on `gallery`.** On any other type these return empty because it's a generic
+  `ContentItem`. Match the reader to the `type`.
 - **`video` (embed) vs `video-file` (self-hosted) are different types.** `video` is a generic
   `ContentItem` (`->raw()` = embed id, provider in `->meta('type')`); `video-file` is a `VideoFile`
   with `->sources()`/`->url()`/`->poster()`. Don't call image/gallery helpers on either by mistake.
@@ -944,7 +961,7 @@ WeAreAwesome\FrisbeePHPAPI\Content\Page                    // returned page
 WeAreAwesome\FrisbeePHPAPI\Content\ContentList             // returned list (content() + pagination())
 WeAreAwesome\FrisbeePHPAPI\Content\SiteMap                 // returned map (getData())
 WeAreAwesome\FrisbeePHPAPI\Content\Sections\Section        // section (isDisplayed/content/all)
-WeAreAwesome\FrisbeePHPAPI\Content\Types\{Text,Image,Gallery,VideoFile,Select,Component,ComponentRow,ContentItem}
+WeAreAwesome\FrisbeePHPAPI\Content\Types\{Text,Image,Gallery,VideoFile,Select,Link,Component,ComponentRow,ContentItem}
 WeAreAwesome\FrisbeePHPAPI\Content\Menus\{Menu,MenuItem}
 WeAreAwesome\FrisbeePHPAPI\Exceptions\{FrisbeeException,FrisbeeAuthorizationException}
 WeAreAwesome\FrisbeePHPAPI\Requests\Content\Exceptions\FrisbeeContentNotFound

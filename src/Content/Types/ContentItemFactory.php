@@ -35,6 +35,8 @@ class ContentItemFactory
                 return VideoFile::make($content, $cdn);
             case 'text-input-select':
                 return Select::make($content);
+            case 'link':
+                return Link::make($content);
             case 'component':
                 return Component::make($content, $cdn);
             default:
