@@ -227,7 +227,7 @@ Content items resolve to a class based on their `type`: `text-box` → `Text`, `
 | `url()` | `Link` | The link target (href); also `Image`/`VideoFile` |
 | `displayText()` / `hasDisplayText()` | `Link` | Display text (falls back to the URL); whether one was set |
 | `rows()` | `Component` | `Collection<ComponentRow>`; each row's sub-fields hydrate to their real types |
-| `content(string $title)` / `all()` | `ComponentRow` | Read one sub-field by title / all sub-fields (sorted) |
+| `content(string $name)` / `all()` | `ComponentRow` | Read one sub-field by name / all sub-fields (sorted) |
 
 Image URLs resolve against the page's `cdn_url`: a bare filename becomes
 `{cdn_url}/images/{filename}`; an absolute `http…` value is returned as-is.
@@ -289,15 +289,16 @@ standard multi-format `<video>` element with a poster and fallback text:
 
 **Repeater (`component`):** iterate `rows()`; each row's sub-fields hydrate to their real types, so
 nested images/videos/selects behave exactly like top-level content — no raw-array plumbing. Address
-sub-fields by title (which for a component sub-field is the schema **label**, falling back to
-`name`):
+sub-fields by their schema **name**, the same as top-level fields. The name is made from the label
+when the sub-field is created and never changes; the label can. (Reading by label still works for
+code written before rows were stored by name, until that label is renamed.)
 
 ```blade
 @foreach($page->section('Cards')->content('cards')->rows() as $row)
     <x-card
-        title="{{ $row->content('Title')->raw() }}"
-        image="{{ $row->content('Image')->variant(\WeAreAwesome\FrisbeePHPAPI\Content\Types\Image::LARGE) }}"
-        :featured="$row->content('Layout')->is('featured')"
+        title="{{ $row->content('title')->raw() }}"
+        image="{{ $row->content('image')->variant(\WeAreAwesome\FrisbeePHPAPI\Content\Types\Image::LARGE) }}"
+        :featured="$row->content('layout')->is('featured')"
     />
 @endforeach
 ```

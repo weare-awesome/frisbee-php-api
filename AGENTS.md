@@ -305,7 +305,7 @@ else → generic `ContentItem`. Common members:
 | `displayText()` | `Link` | string | Display text; falls back to the URL when none was set. |
 | `hasDisplayText()` | `Link` | bool | Whether explicit display text was set. |
 | `rows()` | `Component` | `Collection<ComponentRow>` | Authored repeater rows; each row's sub-fields hydrate to their real types. |
-| `content(string $title)` | `ComponentRow` | `ContentItemInterface` | One sub-field by title (the schema `label`, fallback `name`). Missing → `NullContent`. |
+| `content(string $name)` | `ComponentRow` | `ContentItemInterface` | One sub-field by schema `name` (falls back to its current `label`). Missing → `NullContent`. |
 | `all()` | `ComponentRow` | `Collection` | All sub-fields in the row, sorted by order. |
 
 Image URLs are resolved against the page's `cdn_url` (a bare filename becomes
@@ -715,24 +715,27 @@ their **real runtime types** via the same factory the SDK uses for top-level con
 @php($cards = $page->section('Cards')->content('cards-component'))   {{-- Component --}}
 @foreach($cards->rows() as $row)
   <x-card
-    title="{{ $row->content('Title')->raw() }}"
-    ctaText="{{ $row->content('CTA 1 Text')->raw() }}"
-    ctaLink="{{ $row->content('CTA 1 Link')->raw() }}"
+    title="{{ $row->content('title')->raw() }}"
+    ctaText="{{ $row->content('cta one text')->raw() }}"
+    ctaLink="{{ $row->content('cta one link')->raw() }}"
     image="{{ $row->content('image')->variant(\WeAreAwesome\FrisbeePHPAPI\Content\Types\Image::LARGE) }}"
     video="{{ $row->content('video')->raw() }}"   {{-- embed id; provider via ->meta('type') --}}
   />
 @endforeach
 ```
 
-Read a row's sub-fields with `->content('Title')` (one by title) or `->all()` (every sub-field,
-sorted by order). One thing to keep in mind about the **title**:
+Read a row's sub-fields with `->content('title')` (one by name) or `->all()` (every sub-field,
+sorted by order). One thing to keep in mind about the **name**:
 
-- **A component sub-field is addressed by its runtime `title`, which is the schema item's `label`
-  (falling back to `name` when the label is null).** So schema `name: "cta one text"` /
-  `label: "CTA 1 Text"` is read as `->content('CTA 1 Text')`. This is the **opposite** of top-level
-  fixed content (where the runtime title is the *name*). Lookups are case-insensitive, but to keep
-  reads predictable **give every `component` sub-field a `label` equal to its `name`**, or always
-  read by the label string. A miss returns a safe `NullContent` (§9), same as a section.
+- **A component sub-field is addressed by its schema `name`, exactly like top-level fixed
+  content.** So schema `name: "cta one text"` / `label: "CTA 1 Text"` is read as
+  `->content('cta one text')`. The label is what editors see and can be renamed at any time; the
+  name is the storage key and never changes once saved — the CMS makes it from the label
+  (`cta_1_text`) when the sub-field is created. Lookups are case-insensitive, and a miss returns a
+  safe `NullContent` (§9), same as a section.
+- Rows used to be stored under the label, so older templates read `->content('CTA 1 Text')`. That
+  still resolves — each row entry carries its sub-field's current label and the lookup falls back
+  to it — but only until the label is renamed. **Write new reads by name.**
 
 The old approach — reading `->meta('items')` and resolving image/video URLs by hand — is no longer
 needed; `rows()` does it. `$component->empty()` / `->notEmpty()` report whether any rows exist.
