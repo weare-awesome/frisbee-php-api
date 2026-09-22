@@ -733,9 +733,9 @@ sorted by order). One thing to keep in mind about the **name**:
   name is the storage key and never changes once saved — the CMS makes it from the label
   (`cta_1_text`) when the sub-field is created. Lookups are case-insensitive, and a miss returns a
   safe `NullContent` (§9), same as a section.
-- Rows used to be stored under the label, so older templates read `->content('CTA 1 Text')`. That
-  still resolves — each row entry carries its sub-field's current label and the lookup falls back
-  to it — but only until the label is renamed. **Write new reads by name.**
+- Each row entry's `title` is still its label, so older templates that read `->content('CTA 1 Text')`
+  keep working — the lookup tries name, then title, then the current label — but a label can be
+  renamed at any time, and then that read finds nothing. **Write new reads by name.**
 
 The old approach — reading `->meta('items')` and resolving image/video URLs by hand — is no longer
 needed; `rows()` does it. `$component->empty()` / `->notEmpty()` report whether any rows exist.

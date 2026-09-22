@@ -18,14 +18,14 @@ use Illuminate\Support\Collection;
  * Row fields are addressed by their **name** — the sub-field's key in the
  * schema, the same as top-level fixed content. The name is made from the label
  * when the sub-field is created and never changes; the label is display text
- * and can change at any time.
+ * and can change at any time. Each stored entry carries the name in its `name`
+ * key.
  *
- * Rows used to be titled by the label, and code written then reads them by
- * label: `->content('CTA 1 Text')`. That still works. Each entry carries the
- * sub-field's current label, and a lookup that matches no name falls back to
- * it — until the label is renamed, which is why the name is what to use.
- * Lookups are case-insensitive and, like a section, a miss returns a safe
- * `NullContent`.
+ * An entry's `title` is its label, as it always has been, so code that reads
+ * rows by label — `->content('CTA 1 Text')` — keeps working: a lookup tries the
+ * name, then the title, then the entry's current label. Rows saved before
+ * entries carried a name are found by title. Lookups are case-insensitive and,
+ * like a section, a miss returns a safe `NullContent`.
  *
  * @package WeAreAwesome\FrisbeePHPAPI\Content\Types
  */
@@ -37,11 +37,14 @@ class ComponentRow
     private Collection $content;
 
     /**
-     * Each entry's label, by the same index as $content. Kept apart because
-     * the content item types have nowhere to hold it.
+     * Each entry's name and label, by the same index as $content. Kept apart
+     * because the content item types have nowhere to hold them.
      *
      * @var Collection<string>
      */
+    private Collection $names;
+
+    /** @var Collection<string> */
     private Collection $labels;
 
     /**
@@ -60,15 +63,18 @@ class ComponentRow
             return ContentItemFactory::make($this->normalise($field), $cdn);
         });
 
+        $this->names = $fields->map(function ($field) {
+            return strtolower((string) ($field['name'] ?? ''));
+        });
+
         $this->labels = $fields->map(function ($field) {
             return strtolower((string) ($field['label'] ?? ''));
         });
     }
 
     /**
-     * One sub-field by name, or by its current label for code written before
-     * rows were titled by name (both case-insensitive). Missing → NullContent
-     * (safe).
+     * One sub-field by name — or by title or label, for code that reads rows
+     * by label (all case-insensitive). Missing → NullContent (safe).
      *
      * @param string $name
      * @return ContentItemInterface
@@ -77,11 +83,19 @@ class ComponentRow
     {
         $wanted = strtolower($name);
 
-        $index = $this->content->search(function ($content) use ($wanted) {
-            return strtolower((string) $content->title) === $wanted;
-        });
+        if ($wanted === '') {
+            return new NullContent($wanted);
+        }
 
-        if ($index === false && $wanted !== '') {
+        $index = $this->names->search($wanted, true);
+
+        if ($index === false) {
+            $index = $this->content->search(function ($content) use ($wanted) {
+                return strtolower((string) $content->title) === $wanted;
+            });
+        }
+
+        if ($index === false) {
             $index = $this->labels->search($wanted, true);
         }
 
