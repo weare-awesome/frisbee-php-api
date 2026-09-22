@@ -290,8 +290,8 @@ standard multi-format `<video>` element with a poster and fallback text:
 **Repeater (`component`):** iterate `rows()`; each row's sub-fields hydrate to their real types, so
 nested images/videos/selects behave exactly like top-level content — no raw-array plumbing. Address
 sub-fields by their schema **name**, the same as top-level fields. The name is made from the label
-when the sub-field is created and never changes; the label can. (Reading by label still works for
-code written before rows were stored by name, until that label is renamed.)
+when the sub-field is created and never changes; the label can. (Reading by label still works — an
+entry's title is its label — but breaks when the label is renamed, so prefer the name.)
 
 ```blade
 @foreach($page->section('Cards')->content('cards')->rows() as $row)
