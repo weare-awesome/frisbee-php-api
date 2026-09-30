@@ -24,6 +24,7 @@ class Page extends BasePage
         'cached_at',
         'cdn_url',
         'slug',
+        'path',
         'title',
         'description',
         'published',
